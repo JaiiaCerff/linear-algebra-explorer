@@ -5,6 +5,8 @@ what it does to space — in 2D, in 3D, between spaces of different dimension, a
 
 No build step, no dependencies, works offline.
 
+Repository: <https://github.com/JaiiaCerff/linear-algebra-explorer>
+
 ## Run it
 
 Three ways, from simplest to most permanent:
