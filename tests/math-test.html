@@ -1,0 +1,60 @@
+<!doctype html><html><head><meta charset="utf-8"><title>math.js self-test</title><style>body{font:13px monospace;background:#0b0e14;color:#e6e9ef;padding:16px}.ok{color:#83c167}.bad{color:#fc6255}</style></head><body><h3>math.js self-test</h3><pre id="out"></pre>
+<script src="../js/math.js"></script>
+<script>
+const m = LA.m; const out = document.getElementById('out'); let fails = 0;
+const log = (s) => out.textContent += s + '\n';
+const near = (a, b, t = 1e-6) => Math.abs(a - b) < t;
+const check = (name, cond, extra = '') => { if (!cond) fails++; log((cond ? '✓ ' : '✗ ') + name + (extra ? '   ' + extra : '')); };
+const J = (x) => JSON.stringify(x, (k, v) => typeof v === 'number' ? +v.toFixed(4) : v);
+check('det 2x2', near(m.det([[1,2],[3,4]]), -2));
+check('det 4x4 diag', near(m.det(m.diag([2,3,4,5])), 120));
+check('inverse', m.equal(m.mul(m.inverse([[1,2],[3,4]]), [[1,2],[3,4]]), m.identity(2), 1e-9));
+check('inverse singular null', m.inverse([[1,2],[2,4]]) === null);
+check('rank 2x3', m.rank([[1,2,3],[2,4,6]]) === 1);
+const N = m.nullspace([[1,2,3],[2,4,6]]); check('nullspace dim', N.length === 2, J(N));
+check('nullspace in kernel', N.every(v => m.vnorm(m.apply([[1,2,3],[2,4,6]], v)) < 1e-9));
+check('charPoly', J(m.charPoly([[2,1],[1,2]])) === J([3,-4,1]), J(m.charPoly([[2,1],[1,2]])));
+const E1 = m.eigen([[2,1],[1,2]]); check('eigen sym values', near(E1.values[0].re, 3) && near(E1.values[1].re, 1), J(E1.values));
+check('eigen sym vectors', E1.spaces.every(s => { const v = s.vectors[0]; return m.vnorm(m.vsub(m.apply([[2,1],[1,2]], v), m.vscale(v, s.value.re))) < 1e-6; }), J(E1.spaces.map(s=>s.vectors)));
+const E2 = m.eigen([[1,1],[0,1]]); check('shear: one eigenspace, alg 2, geo 1', E2.spaces.length === 1 && E2.spaces[0].alg === 2 && E2.spaces[0].geo === 1 && !E2.diagonalizable, J(E2.spaces));
+const E3 = m.eigen(m.rot2(Math.PI/2)); check('rotation: complex ±i', E3.spaces.every(s => s.complex) && near(Math.abs(E3.values[0].im), 1), J(E3.values));
+const E4 = m.eigen(m.identity(2)); check('identity: geo 2', E4.spaces[0].geo === 2, J(E4.spaces));
+const A3 = [[2,0,0],[0,3,4],[0,4,9]]; const E5 = m.eigen(A3); check('3x3 sym eigenvalues 11,2,1', near(E5.values[0].re, 11) && near(E5.values[1].re, 2) && near(E5.values[2].re, 1), J(E5.values));
+check('3x3 eigvecs', E5.spaces.every(s => m.vnorm(m.vsub(m.apply(A3, s.vectors[0]), m.vscale(s.vectors[0], s.value.re))) < 1e-5));
+const R = m.rot3([1,1,1], 1); const E6 = m.eigen(R); const ax = E6.spaces.find(s => !s.complex); check('rot3 axis eigenvector', ax && m.vnorm(m.vsub(m.vnormalize(ax.vectors[0]), m.vnormalize([1,1,1]))) < 1e-5, J(E6.values));
+const E7 = m.eigen(m.rotPlane(4,0,3,0.7)); check('4x4 rotation eigen: two 1s and e^{±iθ}', E7.values.filter(v => near(v.re,1) && near(v.im,0)).length === 2, J(E7.values));
+const E8 = m.eigen([[1,2],[2,4]]); check('singular eigen 5, 0', near(E8.values[0].re,5) && near(E8.values[1].re,0), J(E8.values));
+for (const A of [[[3,0],[4,5]], [[1,2,3],[4,5,6]], [[1,2],[3,4],[5,6]], [[0,0],[0,0]], [[1,2,0],[2,4,0]], [[1],[2],[3]], [[1,2,3]], m.rot3([0,0,1],0.5)]) {
+  const {U,S,V} = m.svd(A); const r = m.rows(A), c = m.cols(A); const Sig = m.zeros(r,c); S.forEach((s,i)=>Sig[i][i]=s);
+  const rec = m.mul(m.mul(U,Sig), m.transpose(V));
+  check('svd recon ' + r + 'x' + c, m.equal(rec, A, 1e-8) && m.isOrthogonal(U) && m.isOrthogonal(V) && m.det(V) > 0 && S.every((s,i)=> i===0 || s <= S[i-1]+1e-12), 'S=' + J(S) + ' detV=' + m.fmt(m.det(V)));
+}
+const P = m.pinv([[1,2,3],[4,5,6]]); check('pinv A A+ A = A', m.equal(m.mul(m.mul([[1,2,3],[4,5,6]], P), [[1,2,3],[4,5,6]]), [[1,2,3],[4,5,6]], 1e-8));
+check('polyRoots cubic 1,2,3', J(m.polyRoots([-6,11,-6,1]).map(z=>z.re)) === J([3,2,1]), J(m.polyRoots([-6,11,-6,1])));
+check('parse', J(['1/2','sqrt(2)/2','cos(pi/3)','-1.5','2^3','abc','1e3','−3','2e'].map(m.parseNum)) === J([0.5,0.7071,0.5,-1.5,8,null,1000,-3,null]), J(['1/2','sqrt(2)/2','cos(pi/3)','-1.5','2^3','abc','1e3','−3','2e'].map(m.parseNum)));
+check('solve', J(m.solve([[1,2],[3,4]],[5,6])) === J([-4,4.5]), J(m.solve([[1,2],[3,4]],[5,6])));
+check('solve singular inconsistent', m.solve([[1,2],[2,4]],[1,3]) === null);
+check('solve singular consistent', m.solve([[1,2],[2,4]],[1,2]) !== null);
+check('complement', m.complement([[1,1,0]],3).length === 2 && m.complement([[1,1,0]],3).every(v => near(m.vdot(v,[1,1,0]),0)));
+check('fmt', J([m.fmt(-0.001), m.fmt(1.5), m.fmt(2/3), m.fmtC({re:1,im:-1}), m.fmtC({re:0,im:2}), m.fmt(-2)]) === J(['0','1.5','0.67','1 − i','2i','−2']), J([m.fmt(-0.001), m.fmt(1.5), m.fmt(2/3), m.fmtC({re:1,im:-1}), m.fmtC({re:0,im:2}), m.fmt(-2)]));
+check('cond singular = inf', m.cond([[1,2],[2,4]]) === Infinity);
+check('projector onto line', m.equal(m.projector([[1,1]]), [[0.5,0.5],[0.5,0.5]], 1e-9));
+check('hypercube 4', m.hypercube(4).verts.length === 16 && m.hypercube(4).edges.length === 32);
+check('resize', J(m.resize([[1,2],[3,4]],3,3)) === J([[1,2,0],[3,4,0],[0,0,1]]));
+
+const QRA = [[1,1,0],[1,0,1],[0,1,1]]; const qr = m.qr(QRA);
+check('qr recon', m.equal(m.mul(qr.Q, qr.R), QRA, 1e-9) && m.isOrthogonal(qr.Q) && qr.ok && qr.R[1][0] === 0 && qr.R[2][0] === 0 && qr.R[2][1] === 0, J(qr.R));
+check('qr dependent flagged', !m.qr([[1,2],[2,4]]).ok);
+const qd = m.qr([[1,2],[2,4]]); check('qr dependent still A = QR with orthogonal Q', m.equal(m.mul(qd.Q, qd.R), [[1,2],[2,4]], 1e-9) && m.isOrthogonal(qd.Q), J(qd.R));
+let Bq = [[1,1,0],[1,0,1],[0,1,1]]; for (let i=0;i<30;i++){ const mu=m.wilkinsonShift(Bq); const {Q,R}=m.qr(m.sub(Bq, m.scale(m.identity(3),mu))); Bq=m.add(m.mul(R,Q), m.scale(m.identity(3),mu)); } check('shifted QR algorithm converges to 2,1,-1', J(Bq.map((r,i)=>r[i]).sort((a,b)=>b-a)) === J([2,1,-1]) && Math.max(Math.abs(Bq[1][0]),Math.abs(Bq[2][0]),Math.abs(Bq[2][1])) < 1e-6, J(Bq));
+const Rg = m.expm([[0,-Math.PI/2],[Math.PI/2,0]]); check('expm rotation generator', m.equal(Rg, [[0,-1],[1,0]], 1e-9), J(Rg));
+check('expm diag', m.equal(m.expm(m.diag([1,-2])), m.diag([Math.E, Math.exp(-2)]), 1e-9));
+check('expm large norm', m.equal(m.expm([[10,0],[0,0]]), [[Math.exp(10),0],[0,1]], 1e-5));
+const Ad=[[1,-1.5],[1,0.5],[1,2]], bd=[0,2,1.5]; const ls=m.lstsq(Ad,bd);
+check('lstsq residual ⊥ columns', m.vnorm(m.apply(m.transpose(Ad), ls.r)) < 1e-9 && ls.ok, J(ls.x));
+check('lstsq projection idempotent', m.equal(m.mul(ls.P, ls.P), ls.P, 1e-9) && m.isSymmetric(ls.P));
+check('classify saddle', m.classify2([[1,0],[0,-1]]).startsWith('saddle'));
+check('classify center', m.classify2([[0,-1],[1,0]]).startsWith('center'));
+log('\n' + (fails ? fails + ' FAILED' : 'ALL PASSED'));
+document.title = fails ? 'FAIL ' + fails : 'PASS';
+</script></body></html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Algebra Explorer</title>
+<meta name="description" content="An interactive, 3Blue1Brown-style explorer for vectors, matrices, linear transformations in 2D, 3D and beyond, non-square maps, eigenvectors and the SVD.">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0e14'/%3E%3Cpath d='M6 26 L6 6 M6 26 L26 26' stroke='%2358c4dd' stroke-width='2' fill='none'/%3E%3Cpath d='M6 26 L22 10' stroke='%23f5d547' stroke-width='2.5'/%3E%3Cpath d='M6 26 L20 22' stroke='%2383c167' stroke-width='2.5'/%3E%3Cpath d='M6 26 L10 12' stroke='%23fc6255' stroke-width='2.5'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="topbar">
+  <button id="menu" class="icon-btn" aria-label="Chapters">☰</button>
+  <a class="brand" href="#start"><span class="brand-mark">[ A ]</span> Linear Algebra Explorer</a>
+  <div class="ch-head"><span id="ch-num" class="ch-num"></span><h1 id="ch-title"></h1><span id="ch-summary" class="ch-summary"></span></div>
+  <div class="nav-btns"><button id="prev" class="btn small" title="Previous chapter  [">‹ Prev</button><button id="next" class="btn small" title="Next chapter  ]">Next ›</button></div>
+</header>
+<nav id="nav" class="sidebar" aria-label="Chapters"></nav>
+<main class="stage-wrap">
+  <div id="stage"></div>
+  <div id="hint"></div>
+</main>
+<aside id="panel" class="panel">
+  <div id="controls"></div>
+  <div id="notes"></div>
+</aside>
+<script src="js/math.js"></script>
+<script src="js/render2d.js"></script>
+<script src="js/render3d.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/chapters/start.js"></script>
+<script src="js/chapters/vectors.js"></script>
+<script src="js/chapters/transform2d.js"></script>
+<script src="js/chapters/composition.js"></script>
+<script src="js/chapters/determinant.js"></script>
+<script src="js/chapters/systems.js"></script>
+<script src="js/chapters/transform3d.js"></script>
+<script src="js/chapters/nonsquare.js"></script>
+<script src="js/chapters/dot.js"></script>
+<script src="js/chapters/cross.js"></script>
+<script src="js/chapters/basis.js"></script>
+<script src="js/chapters/gramschmidt.js"></script>
+<script src="js/chapters/leastsquares.js"></script>
+<script src="js/chapters/eigen.js"></script>
+<script src="js/chapters/svd.js"></script>
+<script src="js/chapters/matexp.js"></script>
+<script src="js/chapters/highdim.js"></script>
+<script src="js/chapters/functions.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
